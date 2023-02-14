@@ -1,0 +1,16 @@
+*.iml
+.gradle
+.idea/
+/local.properties
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+keystore.zip
+key/
+key.zip
+keystore.jks
+/app/src/test/
+/app/src/androidTest/
