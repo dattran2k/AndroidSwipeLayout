@@ -17,8 +17,6 @@ class SecondFragment : BaseSwipeableFragment<FragmentSecondBinding>(FragmentSeco
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.buttonSecond.setOnClickListener {
-            NavigationManager.getInstance().popBackStack()
-        }
+
     }
 }

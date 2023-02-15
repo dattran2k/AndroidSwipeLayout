@@ -74,6 +74,7 @@ abstract class BaseSwipeableFragment<T : ViewBinding>(bindingInflater: (layoutIn
             .listener(this)
             .edgeSize(0.5f)
             .edge(false)
+            .endScrimThreshHold(0.7f)
             .position(SliderPosition.LEFT_FACEBOOK)
             .touchDisabledViews(getTouchDisabledViews())
             .scrimStartAlpha(1f)
@@ -103,21 +104,21 @@ abstract class BaseSwipeableFragment<T : ViewBinding>(bindingInflater: (layoutIn
 
         override fun onClosed() {
             if (config.listener != null) {
-                if (config.listener.onSlideClosed()) {
+                if (config.listener?.onSlideClosed() == true) {
                     return
                 }
             }
-            Log.e(TAG, "onClosed: ", )
+            Log.e(TAG, "onClosed: ")
             NavigationManager.getInstance().popBackStack()
         }
 
         override fun onOpened() {
-            Log.e(TAG, "onOpened: ", )
+            Log.e(TAG, "onOpened: ")
             config.listener?.onSlideOpened()
         }
 
         override fun onSlideChange(percent: Float) {
-            Log.e(TAG, "onSlideChange: $percent", )
+//            Log.e(TAG, "onSlideChange: $percent")
             config.listener?.onSlideChange(percent)
         }
     }
