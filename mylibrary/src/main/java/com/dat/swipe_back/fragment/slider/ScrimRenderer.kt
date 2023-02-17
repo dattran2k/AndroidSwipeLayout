@@ -1,10 +1,10 @@
-package com.dat.swipe.slider
+package com.dat.swipe_back.fragment.slider
 
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
 import android.view.View
-import com.dat.swipe.model.SliderPosition
+import com.dat.swipe_back.fragment.model.SliderPosition
 
 internal class ScrimRenderer(private val rootView: View, private val decorView: View) {
     private val dirtyRect: Rect = Rect()

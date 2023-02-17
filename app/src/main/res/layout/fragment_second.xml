@@ -7,6 +7,7 @@
     tools:context=".navigation_manager.fragment.SecondFragment">
 
     <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/im"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:adjustViewBounds="true"

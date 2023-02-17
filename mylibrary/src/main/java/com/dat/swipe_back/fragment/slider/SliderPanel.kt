@@ -1,8 +1,10 @@
-package com.dat.swipe.slider
+package com.dat.swipe_back.fragment.slider
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
+import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
@@ -10,9 +12,10 @@ import android.widget.FrameLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.ViewGroupCompat
 import androidx.customview.widget.ViewDragHelper
-import com.dat.swipe.model.SliderConfig
-import com.dat.swipe.model.SliderInterface
-import com.dat.swipe.model.SliderPosition
+import com.dat.swipe_back.fragment.model.SliderConfig
+import com.dat.swipe_back.fragment.model.SliderInterface
+import com.dat.swipe_back.fragment.model.SliderListener
+import com.dat.swipe_back.fragment.model.SliderPosition
 import kotlin.math.abs
 
 class SliderPanel : FrameLayout {
@@ -20,30 +23,58 @@ class SliderPanel : FrameLayout {
         private const val MIN_FLING_VELOCITY = 400 // dips per second
         const val TAG = "SliderPanel"
         private fun clamp(value: Int, min: Int, max: Int): Int {
-            return Math.max(min, Math.min(max, value))
+            return min.coerceAtLeast(max.coerceAtMost(value))
         }
 
         private fun toAlpha(percentage: Float): Int {
             return (percentage * 255).toInt()
         }
     }
+
     private var screenWidth = 0
     private var screenHeight = 0
-    private lateinit var decorView: View
+    private var decorView: View? = null
     private lateinit var dragHelper: ViewDragHelper
-    private var listener: OnPanelSlideListener? = null
+    private var listener: SliderListener? = null
     private lateinit var scrimPaint: Paint
     private lateinit var scrimRenderer: ScrimRenderer
     private var isLocked = false
     private var isEdgeTouched = false
     private var edgePosition = 0
     var config: SliderConfig = SliderConfig.Builder().build()
+        set(value) {
+            field = value
+            listener = value.listener
+        }
     private var decorViewLeftOffset = 0
 
     constructor(context: Context) : super(context)
     constructor(context: Context, decorView: View, config: SliderConfig?) : super(context) {
+        setBackgroundColor(Color.TRANSPARENT)
         this.decorView = decorView
         this.config = config ?: SliderConfig.Builder().build()
+        init()
+    }
+
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(
+        context,
+        attrs,
+        defStyleAttr
+    )
+
+    override fun onFinishInflate() {
+        super.onFinishInflate()
+        if (childCount > 1)
+            throw IllegalArgumentException("child must be single layout")
+        val childView = getChildAt(0)
+        decorView = childView
+        init()
+    }
+
+    fun setLateConfig(config: SliderConfig) {
+        this.config = config
+
         init()
     }
 
@@ -100,13 +131,13 @@ class SliderPanel : FrameLayout {
         if (dragHelper.continueSettling(true)) {
             ViewCompat.postInvalidateOnAnimation(this)
         } else {
-            decorViewLeftOffset = decorView.left
+            decorViewLeftOffset = decorView?.left ?: 0
         }
     }
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
-        decorView.offsetLeftAndRight(decorViewLeftOffset)
+        decorView?.offsetLeftAndRight(decorViewLeftOffset)
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -118,9 +149,6 @@ class SliderPanel : FrameLayout {
      *
      * @param listener callback implementation
      */
-    fun setOnPanelSlideListener(listener: OnPanelSlideListener?) {
-        this.listener = listener
-    }
 
     /**
      * Get the default [SliderInterface] from which to control the panel with after attachment
@@ -141,7 +169,7 @@ class SliderPanel : FrameLayout {
     private val leftCallback: ViewDragHelper.Callback = object : ViewDragHelper.Callback() {
         override fun tryCaptureView(child: View, pointerId: Int): Boolean {
             val edgeCase = !config.isEdgeOnly || dragHelper.isEdgeTouched(edgePosition, pointerId)
-            return child.id == decorView.id && edgeCase
+            return child.id == decorView?.id && edgeCase
         }
 
         override fun clampViewPositionHorizontal(child: View, left: Int, dx: Int): Int {
@@ -173,7 +201,13 @@ class SliderPanel : FrameLayout {
             invalidate()
         }
 
-        override fun onViewPositionChanged(changedView: View, left: Int, top: Int, dx: Int, dy: Int) {
+        override fun onViewPositionChanged(
+            changedView: View,
+            left: Int,
+            top: Int,
+            dx: Int,
+            dy: Int
+        ) {
             super.onViewPositionChanged(changedView, left, top, dx, dy)
             val percent = 1f - left.toFloat() / screenWidth.toFloat()
             if (listener != null) listener?.onSlideChange(percent)
@@ -183,14 +217,14 @@ class SliderPanel : FrameLayout {
 
         override fun onViewDragStateChanged(state: Int) {
             super.onViewDragStateChanged(state)
-            listener?.onStateChanged(state)
+            listener?.onSlideStateChanged(state)
             when (state) {
-                ViewDragHelper.STATE_IDLE -> if (decorView.left == 0) {
+                ViewDragHelper.STATE_IDLE -> if (decorView?.left == 0) {
                     // State Open
-                    listener?.onOpened()
+                    listener?.onSlideOpened()
                 } else {
                     // State Closed
-                    listener?.onClosed()
+                    listener?.onSlideClosed()
                 }
                 ViewDragHelper.STATE_DRAGGING -> {}
                 ViewDragHelper.STATE_SETTLING -> {}
@@ -204,7 +238,7 @@ class SliderPanel : FrameLayout {
     private val rightCallback: ViewDragHelper.Callback = object : ViewDragHelper.Callback() {
         override fun tryCaptureView(child: View, pointerId: Int): Boolean {
             val edgeCase = !config.isEdgeOnly || dragHelper.isEdgeTouched(edgePosition, pointerId)
-            return child.id == decorView.id && edgeCase
+            return child.id == decorView?.id && edgeCase
         }
 
         override fun clampViewPositionHorizontal(child: View, left: Int, dx: Int): Int {
@@ -236,7 +270,13 @@ class SliderPanel : FrameLayout {
             invalidate()
         }
 
-        override fun onViewPositionChanged(changedView: View, left: Int, top: Int, dx: Int, dy: Int) {
+        override fun onViewPositionChanged(
+            changedView: View,
+            left: Int,
+            top: Int,
+            dx: Int,
+            dy: Int
+        ) {
             super.onViewPositionChanged(changedView, left, top, dx, dy)
             val percent = 1f - abs(left).toFloat() / screenWidth.toFloat()
             if (listener != null) listener!!.onSlideChange(percent)
@@ -247,14 +287,14 @@ class SliderPanel : FrameLayout {
 
         override fun onViewDragStateChanged(state: Int) {
             super.onViewDragStateChanged(state)
-            if (listener != null) listener?.onStateChanged(state)
+            if (listener != null) listener?.onSlideStateChanged(state)
             when (state) {
                 ViewDragHelper.STATE_IDLE -> if (decorView!!.left == 0) {
                     // State Open
-                    if (listener != null) listener?.onOpened()
+                    if (listener != null) listener?.onSlideOpened()
                 } else {
                     // State Closed
-                    if (listener != null) listener?.onClosed()
+                    if (listener != null) listener?.onSlideClosed()
                 }
                 ViewDragHelper.STATE_DRAGGING -> {}
                 ViewDragHelper.STATE_SETTLING -> {}
@@ -299,7 +339,13 @@ class SliderPanel : FrameLayout {
             invalidate()
         }
 
-        override fun onViewPositionChanged(changedView: View, left: Int, top: Int, dx: Int, dy: Int) {
+        override fun onViewPositionChanged(
+            changedView: View,
+            left: Int,
+            top: Int,
+            dx: Int,
+            dy: Int
+        ) {
             super.onViewPositionChanged(changedView, left, top, dx, dy)
             val percent = 1f - abs(top).toFloat() / screenHeight.toFloat()
             if (listener != null) listener!!.onSlideChange(percent)
@@ -310,14 +356,14 @@ class SliderPanel : FrameLayout {
 
         override fun onViewDragStateChanged(state: Int) {
             super.onViewDragStateChanged(state)
-            listener?.onStateChanged(state)
+            listener?.onSlideStateChanged(state)
             when (state) {
                 ViewDragHelper.STATE_IDLE -> if (decorView!!.top == 0) {
                     // State Open
-                    listener?.onOpened()
+                    listener?.onSlideOpened()
                 } else {
                     // State Closed
-                    listener?.onClosed()
+                    listener?.onSlideClosed()
                 }
                 ViewDragHelper.STATE_DRAGGING -> {}
                 ViewDragHelper.STATE_SETTLING -> {}
@@ -362,7 +408,13 @@ class SliderPanel : FrameLayout {
             invalidate()
         }
 
-        override fun onViewPositionChanged(changedView: View, left: Int, top: Int, dx: Int, dy: Int) {
+        override fun onViewPositionChanged(
+            changedView: View,
+            left: Int,
+            top: Int,
+            dx: Int,
+            dy: Int
+        ) {
             super.onViewPositionChanged(changedView, left, top, dx, dy)
             val percent = 1f - abs(top).toFloat() / screenHeight.toFloat()
             listener?.onSlideChange(percent)
@@ -373,14 +425,14 @@ class SliderPanel : FrameLayout {
 
         override fun onViewDragStateChanged(state: Int) {
             super.onViewDragStateChanged(state)
-            listener?.onStateChanged(state)
+            listener?.onSlideStateChanged(state)
             when (state) {
                 ViewDragHelper.STATE_IDLE -> if (decorView!!.top == 0) {
                     // State Open
-                    listener?.onOpened()
+                    listener?.onSlideOpened()
                 } else {
                     // State Closed
-                    listener?.onClosed()
+                    listener?.onSlideClosed()
                 }
                 ViewDragHelper.STATE_DRAGGING -> {}
                 ViewDragHelper.STATE_SETTLING -> {}
@@ -436,7 +488,13 @@ class SliderPanel : FrameLayout {
             invalidate()
         }
 
-        override fun onViewPositionChanged(changedView: View, left: Int, top: Int, dx: Int, dy: Int) {
+        override fun onViewPositionChanged(
+            changedView: View,
+            left: Int,
+            top: Int,
+            dx: Int,
+            dy: Int
+        ) {
             super.onViewPositionChanged(changedView, left, top, dx, dy)
             val percent = 1f - abs(top).toFloat() / screenHeight.toFloat()
             if (listener != null) listener!!.onSlideChange(percent)
@@ -447,14 +505,14 @@ class SliderPanel : FrameLayout {
 
         override fun onViewDragStateChanged(state: Int) {
             super.onViewDragStateChanged(state)
-            listener?.onStateChanged(state)
+            listener?.onSlideStateChanged(state)
             when (state) {
                 ViewDragHelper.STATE_IDLE -> if (decorView!!.top == 0) {
                     // State Open
-                    listener?.onOpened()
+                    listener?.onSlideOpened()
                 } else {
                     // State Closed
-                    listener?.onClosed()
+                    listener?.onSlideClosed()
                 }
                 ViewDragHelper.STATE_DRAGGING -> {}
                 ViewDragHelper.STATE_SETTLING -> {}
@@ -508,7 +566,13 @@ class SliderPanel : FrameLayout {
             invalidate()
         }
 
-        override fun onViewPositionChanged(changedView: View, left: Int, top: Int, dx: Int, dy: Int) {
+        override fun onViewPositionChanged(
+            changedView: View,
+            left: Int,
+            top: Int,
+            dx: Int,
+            dy: Int
+        ) {
             super.onViewPositionChanged(changedView, left, top, dx, dy)
             val percent = 1f - abs(left).toFloat() / screenWidth.toFloat()
             listener?.onSlideChange(percent)
@@ -519,14 +583,14 @@ class SliderPanel : FrameLayout {
 
         override fun onViewDragStateChanged(state: Int) {
             super.onViewDragStateChanged(state)
-            listener?.onStateChanged(state)
+            listener?.onSlideStateChanged(state)
             when (state) {
                 ViewDragHelper.STATE_IDLE -> if (decorView!!.left == 0) {
                     // State Open 
-                    listener?.onOpened()
+                    listener?.onSlideOpened()
                 } else {
                     // State Closed
-                    listener?.onClosed()
+                    listener?.onSlideClosed()
                 }
                 ViewDragHelper.STATE_DRAGGING -> {}
                 ViewDragHelper.STATE_SETTLING -> {}
@@ -537,7 +601,7 @@ class SliderPanel : FrameLayout {
     private val leftFacebookCallback: ViewDragHelper.Callback = object : ViewDragHelper.Callback() {
         override fun tryCaptureView(child: View, pointerId: Int): Boolean {
             val edgeCase = !config.isEdgeOnly || dragHelper.isEdgeTouched(edgePosition, pointerId)
-            return child.id == decorView.id && edgeCase
+            return child.id == decorView?.id && edgeCase
         }
 
         override fun clampViewPositionHorizontal(child: View, left: Int, dx: Int): Int {
@@ -574,7 +638,13 @@ class SliderPanel : FrameLayout {
             invalidate()
         }
 
-        override fun onViewPositionChanged(changedView: View, left: Int, top: Int, dx: Int, dy: Int) {
+        override fun onViewPositionChanged(
+            changedView: View,
+            left: Int,
+            top: Int,
+            dx: Int,
+            dy: Int
+        ) {
             super.onViewPositionChanged(changedView, left, top, dx, dy)
             val percent = 1f - abs(left).toFloat() / screenWidth.toFloat()
             if (left > 0) isEnableScrollRight = true
@@ -586,14 +656,14 @@ class SliderPanel : FrameLayout {
 
         override fun onViewDragStateChanged(state: Int) {
             super.onViewDragStateChanged(state)
-            listener?.onStateChanged(state)
+            listener?.onSlideStateChanged(state)
             when (state) {
-                ViewDragHelper.STATE_IDLE -> if (decorView.left == 0) {
+                ViewDragHelper.STATE_IDLE -> if (decorView?.left == 0) {
                     // State Open
-                    listener?.onOpened()
+                    listener?.onSlideOpened()
                 } else {
                     // State Closed
-                    listener?.onClosed()
+                    listener?.onSlideClosed()
                 }
                 ViewDragHelper.STATE_DRAGGING -> {}
                 ViewDragHelper.STATE_SETTLING -> {}
@@ -688,11 +758,12 @@ class SliderPanel : FrameLayout {
     }
 
     private fun applyScrim(percent: Float) {
-        var realPercent = (percent - config.scrimThreshHold  ) / (1 - config.scrimThreshHold)
-        if(realPercent < 0)
+        var realPercent = (percent - config.scrimThreshHold) / (1 - config.scrimThreshHold)
+        if (realPercent < 0)
             realPercent = 0.0F
-        Log.e(TAG, "applyScrim: $realPercent", )
-        val alpha = realPercent * (config.scrimStartAlpha - config.scrimEndAlpha) + config.scrimEndAlpha
+        Log.e(TAG, "applyScrim: $realPercent")
+        val alpha =
+            realPercent * (config.scrimStartAlpha - config.scrimEndAlpha) + config.scrimEndAlpha
         scrimPaint.alpha = toAlpha(alpha)
         invalidate(scrimRenderer.getDirtyRect(config.position))
     }
@@ -701,12 +772,5 @@ class SliderPanel : FrameLayout {
      * The panel sliding interface that gets called
      * whenever the panel is closed or opened
      */
-    interface OnPanelSlideListener {
-        fun onStateChanged(state: Int)
-        fun onClosed()
-        fun onOpened()
-        fun onSlideChange(percent: Float)
-    }
-
 
 }

@@ -1,4 +1,4 @@
-package com.dat.swipe.model
+package com.dat.swipe_back.fragment.model
 
 import androidx.customview.widget.ViewDragHelper
 
@@ -23,5 +23,5 @@ interface SliderListener {
     /**
      * @return `true` than event was processed in the callback.
      */
-    fun onSlideClosed(): Boolean
+    fun onSlideClosed()
 }

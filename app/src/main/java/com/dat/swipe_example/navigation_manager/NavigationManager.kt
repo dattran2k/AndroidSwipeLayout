@@ -68,7 +68,7 @@ class NavigationManager() :
                 addToBackStack((2147483646.0 * Math.random()).toInt().toString())
                 navigateAble = false
                 handlerNavigate.postDelayed(
-                    { navigateAble = true }, 1000
+                    { navigateAble = true }, 100
                 )
             }
         } catch (e: Exception) {

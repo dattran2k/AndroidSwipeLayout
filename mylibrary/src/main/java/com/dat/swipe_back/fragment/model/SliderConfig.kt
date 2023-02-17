@@ -1,4 +1,4 @@
-package com.dat.swipe.model
+package com.dat.swipe_back.fragment.model
 
 import android.graphics.Color
 import android.view.View

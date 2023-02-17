@@ -17,6 +17,8 @@ class SecondFragment : BaseSwipeableFragment<FragmentSecondBinding>(FragmentSeco
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        binding.im.setOnClickListener {
+            NavigationManager.getInstance().openFragment(ThirdFragment())
+        }
     }
 }
