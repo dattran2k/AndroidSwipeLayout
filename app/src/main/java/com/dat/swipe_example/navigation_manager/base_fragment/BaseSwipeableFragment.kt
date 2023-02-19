@@ -1,15 +1,12 @@
 package com.dat.swipe_example.navigation_manager.base_fragment
 
-import android.graphics.Color
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.viewbinding.ViewBinding
 import com.dat.swipe_back.fragment.model.SliderConfig
-import com.dat.swipe_back.fragment.model.SliderInterface
 import com.dat.swipe_back.fragment.model.SliderListener
 import com.dat.swipe_back.fragment.slider.SliderPanel
 
@@ -31,7 +28,11 @@ abstract class BaseSwipeableFragment<T : ViewBinding>(bindingInflater: (layoutIn
             it.removeAllViews()
             it.addView(contentView)
         }
+        onCreateView(binding)
         return rootFrameLayout
+    }
+
+    open fun onCreateView(binding: T) {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -51,7 +52,7 @@ abstract class BaseSwipeableFragment<T : ViewBinding>(bindingInflater: (layoutIn
             .edgeSize(0.5f)
             .edge(false)
             .endScrimThreshHold(0.7f)
-            .position(com.dat.swipe_back.fragment.model.SliderPosition.LEFT_FACEBOOK)
+            .position(com.dat.swipe_back.fragment.model.SliderPosition.TOP)
             .touchDisabledViews(getTouchDisabledViews())
             .scrimStartAlpha(1f)
             .build()

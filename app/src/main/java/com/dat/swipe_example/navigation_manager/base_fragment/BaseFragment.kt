@@ -13,7 +13,7 @@ abstract class BaseFragment<T : ViewBinding>(private val bindingInflater: (layou
 
     var TAG: String = this.javaClass.simpleName.toString()
 
-    private var _binding: T? = null
+    protected var _binding: T? = null
     protected val binding get() = _binding!!
 
     override fun onCreateView(
@@ -21,6 +21,7 @@ abstract class BaseFragment<T : ViewBinding>(private val bindingInflater: (layou
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+
         _binding = bindingInflater.invoke(inflater)
         return binding.root
     }

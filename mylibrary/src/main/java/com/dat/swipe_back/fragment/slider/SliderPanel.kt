@@ -69,12 +69,12 @@ class SliderPanel : FrameLayout {
             throw IllegalArgumentException("child must be single layout")
         val childView = getChildAt(0)
         decorView = childView
+        setBackgroundColor(Color.TRANSPARENT)
         init()
     }
 
     fun setLateConfig(config: SliderConfig) {
         this.config = config
-
         init()
     }
 
@@ -349,7 +349,6 @@ class SliderPanel : FrameLayout {
             super.onViewPositionChanged(changedView, left, top, dx, dy)
             val percent = 1f - abs(top).toFloat() / screenHeight.toFloat()
             if (listener != null) listener!!.onSlideChange(percent)
-
             // Update the dimmer alpha
             applyScrim(percent)
         }

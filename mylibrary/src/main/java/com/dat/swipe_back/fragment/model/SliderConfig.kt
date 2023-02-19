@@ -128,6 +128,11 @@ class SliderConfig private constructor() {
     var scrimThreshHold: Float = 0f
 
     /**
+     *
+     * this is for smoother animation transition
+     * */
+    var isDismissRightAway : Boolean = false
+    /**
      * The Builder for this configuration class. This is the only way to create a
      * configuration
      */
@@ -184,7 +189,10 @@ class SliderConfig private constructor() {
             config.velocityThreshold = threshold
             return this
         }
-
+        fun isDismissRightAway(isDismissRightAway : Boolean): Builder {
+            config.isDismissRightAway = isDismissRightAway
+            return this
+        }
         fun distanceThreshold(@FloatRange(from = 0.1, to = 0.9) threshold: Float): Builder {
             config.distanceThreshold = threshold
             return this

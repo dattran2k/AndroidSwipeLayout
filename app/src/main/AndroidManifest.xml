@@ -11,18 +11,29 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.SwipeableFragmen"
         tools:targetApi="31">
         <activity
-            android:name=".navigation_manager.MainActivityNavigationManager"
+            android:name=".navigation_manager.gridtopager.MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.SwipeableFragmen.NoActionBar">
+
+        </activity>
+        <activity
+            android:name=".activity_navigation.Activity1"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.SwipeableFragmen.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".activity_navigation.Activity2"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.AppCompat.Translucent">
         </activity>
     </application>
 

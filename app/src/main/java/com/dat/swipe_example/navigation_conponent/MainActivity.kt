@@ -1,4 +1,4 @@
-package com.dat.swipe_example
+package com.dat.swipe_example.navigation_conponent
 
 import android.os.Bundle
 import com.google.android.material.snackbar.Snackbar
@@ -9,6 +9,7 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import android.view.Menu
 import android.view.MenuItem
+import com.dat.swipe_example.R
 import com.dat.swipe_example.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
