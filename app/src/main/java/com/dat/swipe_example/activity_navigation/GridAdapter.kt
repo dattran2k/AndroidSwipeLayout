@@ -2,7 +2,6 @@ package com.dat.swipe_example.activity_navigation
 
 import android.content.Intent
 import android.graphics.drawable.Drawable
-import android.transition.TransitionSet
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,7 +16,7 @@ import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.dat.swipe_example.R
-import com.dat.swipe_example.navigation_manager.gridtopager.MainActivity.Companion.currentPosition
+import com.dat.swipe_example.activity_navigation.Activity1.Companion.currentPosition
 import com.dat.swipe_example.navigation_manager.gridtopager.adapter.ImageData
 import com.dat.swipe_example.navigation_manager.gridtopager.fragment.ImagePagerFragment
 import java.util.concurrent.atomic.AtomicBoolean

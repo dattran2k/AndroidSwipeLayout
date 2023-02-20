@@ -18,24 +18,28 @@ internal class ScrimRenderer(private val rootView: View, private val decorView: 
             SliderPosition.BOTTOM -> renderBottom(canvas, paint)
             SliderPosition.VERTICAL -> renderVertical(canvas, paint)
             SliderPosition.HORIZONTAL -> renderHorizontal(canvas, paint)
+            SliderPosition.FREE -> renderFreeAll(canvas,paint)
         }
     }
 
     fun getDirtyRect(position: SliderPosition): Rect {
         when (position) {
-            SliderPosition.LEFT -> dirtyRect[0, 0, decorView.left] = rootView.measuredHeight
-            SliderPosition.RIGHT -> dirtyRect[decorView.right, 0, rootView.measuredWidth] = rootView.measuredHeight
-            SliderPosition.TOP -> dirtyRect[0, 0, rootView.measuredWidth] = decorView.top
-            SliderPosition.BOTTOM -> dirtyRect[0, decorView.bottom, rootView.measuredWidth] = rootView.measuredHeight
+            SliderPosition.LEFT -> dirtyRect.set(0, 0, decorView.left,rootView.measuredHeight)
+            SliderPosition.RIGHT -> dirtyRect.set(decorView.right, 0, rootView.measuredWidth,rootView.measuredHeight)
+            SliderPosition.TOP -> dirtyRect.set(0, 0, rootView.measuredWidth,decorView.top)
+            SliderPosition.BOTTOM -> dirtyRect.set(0, decorView.bottom, rootView.measuredWidth, rootView.measuredHeight)
             SliderPosition.VERTICAL -> if (decorView.top > 0) {
-                dirtyRect[0, 0, rootView.measuredWidth] = decorView.top
+                dirtyRect.set(0, 0, rootView.measuredWidth,decorView.top)
             } else {
-                dirtyRect[0, decorView.bottom, rootView.measuredWidth] = rootView.measuredHeight
+                dirtyRect.set(0, decorView.bottom, rootView.measuredWidth,rootView.measuredHeight)
             }
             SliderPosition.HORIZONTAL, SliderPosition.LEFT_FACEBOOK -> if (decorView.left > 0) {
-                dirtyRect[0, 0, decorView.left] = rootView.measuredHeight
+                dirtyRect.set(0, 0, decorView.left, rootView.measuredHeight)
             } else {
-                dirtyRect[decorView.right, 0, rootView.measuredWidth] = rootView.measuredHeight
+                dirtyRect.set(decorView.right, 0, rootView.measuredWidth, rootView.measuredHeight)
+            }
+            SliderPosition.FREE -> {
+                dirtyRect.set(0,0,rootView.measuredWidth,rootView.measuredHeight)
             }
         }
         return dirtyRect
@@ -75,6 +79,9 @@ internal class ScrimRenderer(private val rootView: View, private val decorView: 
         } else {
             renderBottom(canvas, paint)
         }
+    }
+    private fun renderFreeAll(canvas: Canvas, paint: Paint) {
+        canvas.drawRect(0f, 0f,  rootView.measuredWidth.toFloat(), rootView.measuredHeight.toFloat(), paint)
     }
 
     private fun renderHorizontal(canvas: Canvas, paint: Paint) {

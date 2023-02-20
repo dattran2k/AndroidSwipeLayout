@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.SharedElementCallback
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.viewpager.widget.ViewPager
 import androidx.viewpager.widget.ViewPager.SimpleOnPageChangeListener
@@ -12,6 +13,7 @@ import androidx.viewpager.widget.ViewPager.SimpleOnPageChangeListener
 import com.dat.swipe_back.fragment.model.SliderConfig
 import com.dat.swipe_back.fragment.model.SliderListener
 import com.dat.swipe_back.fragment.model.SliderPosition
+import com.dat.swipe_back.fragment.slider.SliderPanel
 import com.dat.swipe_example.R
 import com.dat.swipe_example.activity_navigation.Activity1.Companion.currentPosition
 import com.dat.swipe_example.databinding.Activity2Binding
@@ -20,6 +22,7 @@ class Activity2 : AppCompatActivity(), SliderListener {
     companion object {
         const val TAG = "Activity2"
     }
+
     private lateinit var binding: Activity2Binding
     private lateinit var viewPager: ViewPager
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,13 +76,15 @@ class Activity2 : AppCompatActivity(), SliderListener {
     fun getSliderConfig(): SliderConfig {
         return SliderConfig.Builder()
             .listener(this)
+            .position(SliderPosition.FREE)
             .edgeSize(0.5f)
             .distanceThreshold(0.3f)
             .isDismissRightAway(true)
             .edge(false)
             .endScrimThreshHold(0.7f)
-            .position(SliderPosition.TOP)
-            .scrimStartAlpha(0f)
+            .quickDismiss(true,100)
+            .scrimColor(ContextCompat.getColor(this, R.color.black))
+            .scrimStartAlpha(0.9f)
             .build()
     }
 
@@ -88,19 +93,23 @@ class Activity2 : AppCompatActivity(), SliderListener {
     }
 
     override fun onSlideChange(percent: Float) {
-        var alpha: Int
-        if (percent < 0.99)
-            alpha = 0
-        else
-            alpha = 255
-        binding.viewPager.background.alpha = alpha
+
     }
 
     override fun onSlideOpened() {}
 
     override fun onSlideClosed() {
-        binding.viewPager.background.alpha = 255
+//        binding.viewPager.background.alpha = 255
         onBackPressedDispatcher.onBackPressed()
+    }
+
+    override fun onApplyScrim(alpha: Float) {
+        val alphaT = if (alpha != 1f) {
+            0
+        } else {
+            255
+        }
+        binding.viewPager.background.alpha = alphaT
     }
 
     override fun onPause() {

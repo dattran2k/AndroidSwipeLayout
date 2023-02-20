@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.os.Handler
+import android.os.Looper
 import android.util.AttributeSet
 import android.util.Log
 import android.view.MotionEvent
@@ -163,6 +165,227 @@ class SliderPanel : FrameLayout {
         }
     }
 
+    private fun init() {
+        setWillNotDraw(false)
+        screenWidth = resources.displayMetrics.widthPixels
+        val density = resources.displayMetrics.density
+        val minVel = MIN_FLING_VELOCITY * density
+        val callback: ViewDragHelper.Callback
+        when (config.position) {
+            SliderPosition.LEFT -> {
+                callback = leftCallback
+                edgePosition = ViewDragHelper.EDGE_LEFT
+            }
+            SliderPosition.RIGHT -> {
+                callback = rightCallback
+                edgePosition = ViewDragHelper.EDGE_RIGHT
+            }
+            SliderPosition.TOP -> {
+                callback = topCallback
+                edgePosition = ViewDragHelper.EDGE_TOP
+            }
+            SliderPosition.BOTTOM -> {
+                callback = bottomCallback
+                edgePosition = ViewDragHelper.EDGE_BOTTOM
+            }
+            SliderPosition.VERTICAL -> {
+                callback = verticalCallback
+                edgePosition = ViewDragHelper.EDGE_TOP or ViewDragHelper.EDGE_BOTTOM
+            }
+            SliderPosition.HORIZONTAL -> {
+                callback = horizontalCallback
+                edgePosition = ViewDragHelper.EDGE_LEFT or ViewDragHelper.EDGE_RIGHT
+            }
+            SliderPosition.LEFT_FACEBOOK -> {
+                callback = leftFacebookCallback
+                edgePosition = ViewDragHelper.EDGE_LEFT or ViewDragHelper.EDGE_RIGHT
+            }
+            SliderPosition.FREE -> {
+                callback = freeCallBack
+                edgePosition = ViewDragHelper.EDGE_LEFT or
+                        ViewDragHelper.EDGE_RIGHT or
+                        ViewDragHelper.EDGE_TOP or
+                        ViewDragHelper.EDGE_BOTTOM
+            }
+            else -> {
+                callback = leftCallback
+                edgePosition = ViewDragHelper.EDGE_LEFT
+            }
+        }
+        dragHelper = ViewDragHelper.create(this, config.sensitivity, callback)
+        dragHelper.minVelocity = minVel
+        dragHelper.setEdgeTrackingEnabled(edgePosition)
+        ViewGroupCompat.setMotionEventSplittingEnabled(this, false)
+
+        // Setup the dimmer view
+        scrimPaint = Paint()
+        scrimPaint.color = config.scrimColor
+        scrimPaint.alpha = toAlpha(config.scrimStartAlpha)
+        scrimRenderer = ScrimRenderer(this, decorView!!)
+
+        /*
+         * This is so we can get the height of the view and
+         * ignore the system navigation that would be included if we
+         * retrieved this value from the DisplayMetrics
+         */post { screenHeight = height }
+    }
+
+    private fun lock() {
+        dragHelper.abort()
+        isLocked = true
+    }
+
+    private fun unlock() {
+        dragHelper.abort()
+        isLocked = false
+    }
+
+    private fun canDragFromEdge(ev: MotionEvent): Boolean {
+        val x = ev.x
+        val y = ev.y
+        return when (config.position) {
+            SliderPosition.LEFT -> x < config.getEdgeSize(width.toFloat())
+            SliderPosition.RIGHT -> x > width - config.getEdgeSize(width.toFloat())
+            SliderPosition.BOTTOM -> y > height - config.getEdgeSize(height.toFloat())
+            SliderPosition.TOP -> y < config.getEdgeSize(height.toFloat())
+            SliderPosition.HORIZONTAL -> x < config.getEdgeSize(width.toFloat()) || x > width - config.getEdgeSize(
+                width.toFloat()
+            )
+            SliderPosition.VERTICAL -> y < config.getEdgeSize(height.toFloat()) || y > height - config.getEdgeSize(
+                height.toFloat()
+            )
+            SliderPosition.LEFT_FACEBOOK -> x < config.getEdgeSize(width.toFloat())
+            SliderPosition.FREE -> y < config.getEdgeSize(height.toFloat()) ||
+                    y > height - config.getEdgeSize(height.toFloat()) ||
+                    x < config.getEdgeSize(width.toFloat()) ||
+                    x > width - config.getEdgeSize(width.toFloat())
+        }
+    }
+
+    private fun applyScrim(percent: Float) {
+        if (!config.isEnableScrim)
+            return
+        var realPercent = (percent - config.scrimThreshHold) / (1 - config.scrimThreshHold)
+        if (realPercent < 0)
+            realPercent = 0.0F
+        val alpha =
+            realPercent * (config.scrimStartAlpha - config.scrimEndAlpha) + config.scrimEndAlpha
+        scrimPaint.alpha = toAlpha(alpha)
+        listener?.onApplyScrim(alpha)
+        invalidate(scrimRenderer.getDirtyRect(config.position))
+    }
+
+    /**
+     * The drag helper callback interface for the Left position
+     */
+    var startScrollTime = 0L
+    private val freeCallBack: ViewDragHelper.Callback = object : ViewDragHelper.Callback() {
+        override fun tryCaptureView(child: View, pointerId: Int): Boolean {
+            val edgeCase = !config.isEdgeOnly || dragHelper.isEdgeTouched(edgePosition, pointerId)
+            return child.id == decorView?.id && edgeCase
+        }
+
+        override fun clampViewPositionHorizontal(child: View, left: Int, dx: Int): Int {
+            return clamp(left, -screenWidth, screenWidth)
+        }
+
+        override fun clampViewPositionVertical(child: View, top: Int, dy: Int): Int {
+            return clamp(top, -screenHeight, screenHeight)
+        }
+
+        override fun getViewHorizontalDragRange(child: View): Int {
+            return screenWidth
+        }
+
+        override fun getViewVerticalDragRange(child: View): Int {
+            return screenHeight
+        }
+
+        override fun onViewReleased(releasedChild: View, xvel: Float, yvel: Float) {
+            super.onViewReleased(releasedChild, xvel, yvel)
+            val currentTime = System.currentTimeMillis()
+            val start = startScrollTime
+            startScrollTime = 0
+            val top = releasedChild.top
+            var settleTop = 0
+            var settleLeft = 0
+            val topThreshold = (height * config.distanceThreshold).toInt()
+            val isSideSwiping = abs(xvel) > config.velocityThreshold
+            if (yvel > 0) {
+                // Being slinged down
+                if ((abs(yvel) > config.velocityThreshold && !isSideSwiping) ||
+                    top > topThreshold
+                ) {
+                    settleTop = screenHeight
+                    settleLeft = releasedChild.left
+                }
+            } else if (yvel < 0) {
+                // Being slinged up
+                if ((abs(yvel) > config.velocityThreshold && !isSideSwiping) ||
+                    top < -topThreshold
+                ) {
+                    settleTop = -screenHeight
+                    settleLeft = releasedChild.left
+                }
+            } else {
+                if (top > topThreshold) {
+                    settleTop = screenHeight
+                    settleLeft = releasedChild.left
+                } else if (top < -topThreshold) {
+                    settleTop = -screenHeight
+                    settleLeft = releasedChild.left
+                }
+            }
+            // check quick dismiss
+            if (config.quickDismiss && (currentTime- start < config.timeQuickDismiss)) {
+                Log.e(TAG, "onViewReleased: quickDismiss")
+                return
+            }
+            // check dismiss rightAway, ignore scroll to top or bottom
+            if (settleTop != 0 && config.isDismissRightAway)
+                return
+            dragHelper.settleCapturedViewAt(settleLeft, settleTop)
+            invalidate()
+
+        }
+
+        override fun onViewPositionChanged(
+            changedView: View,
+            left: Int,
+            top: Int,
+            dx: Int,
+            dy: Int
+        ) {
+            super.onViewPositionChanged(changedView, left, top, dx, dy)
+            if (startScrollTime == 0L)
+                startScrollTime = System.currentTimeMillis()
+            val percentWidth = 1f - abs(left).toFloat() / screenWidth.toFloat()
+            val percentHeight = 1f - abs(top).toFloat() / screenHeight.toFloat()
+            val percent = (percentWidth + percentHeight) / 2
+            listener?.onSlideChange(percentHeight)
+            // scrim base on percent height
+            applyScrim(percentHeight)
+        }
+
+        override fun onViewDragStateChanged(state: Int) {
+            super.onViewDragStateChanged(state)
+            listener?.onSlideStateChanged(state)
+            when (state) {
+                ViewDragHelper.STATE_IDLE -> if (decorView?.left == 0 && decorView?.top == 0) {
+                    // State Open
+
+                    listener?.onSlideOpened()
+                } else {
+                    // State Closed
+                    Log.e(TAG, "STATE_IDLE: left ${decorView?.left}, top ${decorView?.top}")
+                    listener?.onSlideClosed()
+                }
+                ViewDragHelper.STATE_DRAGGING -> {}
+                ViewDragHelper.STATE_SETTLING -> {}
+            }
+        }
+    }
+
     /**
      * The drag helper callback interface for the Left position
      */
@@ -210,7 +433,7 @@ class SliderPanel : FrameLayout {
         ) {
             super.onViewPositionChanged(changedView, left, top, dx, dy)
             val percent = 1f - left.toFloat() / screenWidth.toFloat()
-            if (listener != null) listener?.onSlideChange(percent)
+            listener?.onSlideChange(percent)
             // Update the dimmer alpha
             applyScrim(percent)
         }
@@ -305,6 +528,7 @@ class SliderPanel : FrameLayout {
     /**
      * The drag helper callbacks for dragging the slidr attachment from the top of the screen
      */
+
     private val topCallback: ViewDragHelper.Callback = object : ViewDragHelper.Callback() {
         override fun tryCaptureView(child: View, pointerId: Int): Boolean {
             return child.id == decorView!!.id && (!config.isEdgeOnly || isEdgeTouched)
@@ -584,8 +808,8 @@ class SliderPanel : FrameLayout {
             super.onViewDragStateChanged(state)
             listener?.onSlideStateChanged(state)
             when (state) {
-                ViewDragHelper.STATE_IDLE -> if (decorView!!.left == 0) {
-                    // State Open 
+                ViewDragHelper.STATE_IDLE -> if (decorView?.left == 0) {
+                    // State Open
                     listener?.onSlideOpened()
                 } else {
                     // State Closed
@@ -669,107 +893,5 @@ class SliderPanel : FrameLayout {
             }
         }
     }
-
-    private fun init() {
-        setWillNotDraw(false)
-        screenWidth = resources.displayMetrics.widthPixels
-        val density = resources.displayMetrics.density
-        val minVel = MIN_FLING_VELOCITY * density
-        val callback: ViewDragHelper.Callback
-        when (config.position) {
-            SliderPosition.LEFT -> {
-                callback = leftCallback
-                edgePosition = ViewDragHelper.EDGE_LEFT
-            }
-            SliderPosition.RIGHT -> {
-                callback = rightCallback
-                edgePosition = ViewDragHelper.EDGE_RIGHT
-            }
-            SliderPosition.TOP -> {
-                callback = topCallback
-                edgePosition = ViewDragHelper.EDGE_TOP
-            }
-            SliderPosition.BOTTOM -> {
-                callback = bottomCallback
-                edgePosition = ViewDragHelper.EDGE_BOTTOM
-            }
-            SliderPosition.VERTICAL -> {
-                callback = verticalCallback
-                edgePosition = ViewDragHelper.EDGE_TOP or ViewDragHelper.EDGE_BOTTOM
-            }
-            SliderPosition.HORIZONTAL -> {
-                callback = horizontalCallback
-                edgePosition = ViewDragHelper.EDGE_LEFT or ViewDragHelper.EDGE_RIGHT
-            }
-            SliderPosition.LEFT_FACEBOOK -> {
-                callback = leftFacebookCallback
-                edgePosition = ViewDragHelper.EDGE_LEFT or ViewDragHelper.EDGE_RIGHT
-            }
-            else -> {
-                callback = leftCallback
-                edgePosition = ViewDragHelper.EDGE_LEFT
-            }
-        }
-        dragHelper = ViewDragHelper.create(this, config.sensitivity, callback)
-        dragHelper.minVelocity = minVel
-        dragHelper.setEdgeTrackingEnabled(edgePosition)
-        ViewGroupCompat.setMotionEventSplittingEnabled(this, false)
-
-        // Setup the dimmer view
-        scrimPaint = Paint()
-        scrimPaint.color = config.scrimColor
-        scrimPaint.alpha = toAlpha(config.scrimStartAlpha)
-        scrimRenderer = ScrimRenderer(this, decorView!!)
-
-        /*
-         * This is so we can get the height of the view and
-         * ignore the system navigation that would be included if we
-         * retrieved this value from the DisplayMetrics
-         */post { screenHeight = height }
-    }
-
-    private fun lock() {
-        dragHelper.abort()
-        isLocked = true
-    }
-
-    private fun unlock() {
-        dragHelper.abort()
-        isLocked = false
-    }
-
-    private fun canDragFromEdge(ev: MotionEvent): Boolean {
-        val x = ev.x
-        val y = ev.y
-        return when (config.position) {
-            SliderPosition.LEFT -> x < config.getEdgeSize(width.toFloat())
-            SliderPosition.RIGHT -> x > width - config.getEdgeSize(width.toFloat())
-            SliderPosition.BOTTOM -> y > height - config.getEdgeSize(height.toFloat())
-            SliderPosition.TOP -> y < config.getEdgeSize(height.toFloat())
-            SliderPosition.HORIZONTAL -> x < config.getEdgeSize(width.toFloat()) || x > width - config.getEdgeSize(
-                width.toFloat()
-            )
-            SliderPosition.VERTICAL -> y < config.getEdgeSize(height.toFloat()) || y > height - config.getEdgeSize(
-                height.toFloat()
-            )
-            SliderPosition.LEFT_FACEBOOK -> x < config.getEdgeSize(width.toFloat())
-        }
-    }
-
-    private fun applyScrim(percent: Float) {
-        var realPercent = (percent - config.scrimThreshHold) / (1 - config.scrimThreshHold)
-        if (realPercent < 0)
-            realPercent = 0.0F
-        Log.e(TAG, "applyScrim: $realPercent")
-        val alpha =
-            realPercent * (config.scrimStartAlpha - config.scrimEndAlpha) + config.scrimEndAlpha
-        scrimPaint.alpha = toAlpha(alpha)
-        invalidate(scrimRenderer.getDirtyRect(config.position))
-    }
-
-    /**
-     * The panel sliding interface that gets called
-     * whenever the panel is closed or opened
-     */
 
 }

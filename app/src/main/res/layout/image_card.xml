@@ -25,6 +25,7 @@
     android:padding="2dp"
     android:background="@color/cardview_light_background"
     android:clickable="true"
+    android:backgroundTint="@color/white"
     android:clipChildren="false"
     android:foreground="?android:selectableItemBackground"
     card_view:cardCornerRadius="2dp"

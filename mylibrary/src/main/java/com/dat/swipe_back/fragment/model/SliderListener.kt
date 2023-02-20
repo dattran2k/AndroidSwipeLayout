@@ -24,4 +24,8 @@ interface SliderListener {
      * @return `true` than event was processed in the callback.
      */
     fun onSlideClosed()
+
+    fun onApplyScrim(alpha: Float) {
+
+    }
 }

@@ -133,6 +133,23 @@ class SliderConfig private constructor() {
      * */
     var isDismissRightAway : Boolean = false
     /**
+     *
+     * this flag for check auto draw scrim
+     *
+     * */
+    var isEnableScrim : Boolean = true
+
+    /**
+     * when you swipe very fast, dismiss right away
+     * */
+    var quickDismiss : Boolean = false
+    /**
+     * when you swipe very fast, dismiss right away , millisecond
+     * if( onViewReleased - onViewPositionChanged < timeQuickDismiss) -> dismiss
+     * */
+    var timeQuickDismiss : Long = 1000
+
+    /**
      * The Builder for this configuration class. This is the only way to create a
      * configuration
      */
@@ -202,7 +219,15 @@ class SliderConfig private constructor() {
             config.isEdgeOnly = flag
             return this
         }
-
+        fun quickDismiss(quickDismiss : Boolean,timeQuickDismiss : Long): Builder {
+            config.quickDismiss = quickDismiss
+            config.timeQuickDismiss = timeQuickDismiss
+            return this
+        }
+        fun isEnableScrim(isEnableScrim: Boolean): Builder {
+            config.isEnableScrim = isEnableScrim
+            return this
+        }
         fun edgeSize(@FloatRange(from = 0.0, to = 1.0) edgeSize: Float): Builder {
             config.edgeSize = edgeSize
             return this

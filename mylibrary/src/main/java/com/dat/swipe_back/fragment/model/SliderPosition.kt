@@ -7,5 +7,6 @@ enum class SliderPosition {
     TOP,
     BOTTOM,
     VERTICAL,
-    HORIZONTAL
+    HORIZONTAL,
+    FREE
 }
