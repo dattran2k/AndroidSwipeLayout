@@ -305,7 +305,7 @@ class SliderPanel : FrameLayout {
             super.onViewReleased(releasedChild, xvel, yvel)
             val currentTime = System.currentTimeMillis()
             val start = startScrollTime
-            startScrollTime = 0
+
             val top = releasedChild.top
             var settleTop = 0
             var settleLeft = 0
@@ -337,6 +337,8 @@ class SliderPanel : FrameLayout {
                 }
             }
             // check quick dismiss
+            Log.e(TAG, "onViewReleased: time hold ${currentTime- start}", )
+            Log.e(TAG, "onViewReleased: config.timeQuickDismiss ${config.timeQuickDismiss}", )
             if (config.quickDismiss && (currentTime- start < config.timeQuickDismiss)) {
                 Log.e(TAG, "onViewReleased: quickDismiss")
                 return
@@ -371,14 +373,17 @@ class SliderPanel : FrameLayout {
             super.onViewDragStateChanged(state)
             listener?.onSlideStateChanged(state)
             when (state) {
-                ViewDragHelper.STATE_IDLE -> if (decorView?.left == 0 && decorView?.top == 0) {
-                    // State Open
+                ViewDragHelper.STATE_IDLE ->  {
+                    startScrollTime = 0
+                    if (decorView?.left == 0 && decorView?.top == 0) {
+                        // State Open
 
-                    listener?.onSlideOpened()
-                } else {
-                    // State Closed
-                    Log.e(TAG, "STATE_IDLE: left ${decorView?.left}, top ${decorView?.top}")
-                    listener?.onSlideClosed()
+                        listener?.onSlideOpened()
+                    } else {
+                        // State Closed
+                        Log.e(TAG, "STATE_IDLE: left ${decorView?.left}, top ${decorView?.top}")
+                        listener?.onSlideClosed()
+                    }
                 }
                 ViewDragHelper.STATE_DRAGGING -> {}
                 ViewDragHelper.STATE_SETTLING -> {}
