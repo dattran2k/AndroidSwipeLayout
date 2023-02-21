@@ -49,13 +49,16 @@ class ImagePagerFragment : BaseSwipeableFragment<FragmentPagerBinding>(FragmentP
             Log.d("Fragment Name", fragmentName ?: "Unknown")
         }
         requireActivity().onBackPressedDispatcher.addCallback(this@ImagePagerFragment) {
-
+            val firstFragment =
+                requireActivity().supportFragmentManager.fragments.find { it is GridFragment }
             requireActivity().supportFragmentManager.popBackStack()
             requireActivity().supportFragmentManager.beginTransaction()
                 .remove(this@ImagePagerFragment) // Remove secondFragment when back from it
                 .commit()
-
-
+//            requireActivity().supportFragmentManager.beginTransaction()
+//                .replace(R.id.fragment_container,firstFragment!!)
+//                .commit()
+//            requireActivity().supportFragmentManager.popBackStack()
         }
     }
 

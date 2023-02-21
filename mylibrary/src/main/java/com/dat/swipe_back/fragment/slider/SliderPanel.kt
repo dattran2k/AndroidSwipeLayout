@@ -207,10 +207,6 @@ class SliderPanel : FrameLayout {
                         ViewDragHelper.EDGE_TOP or
                         ViewDragHelper.EDGE_BOTTOM
             }
-            else -> {
-                callback = leftCallback
-                edgePosition = ViewDragHelper.EDGE_LEFT
-            }
         }
         dragHelper = ViewDragHelper.create(this, config.sensitivity, callback)
         dragHelper.minVelocity = minVel
@@ -227,7 +223,8 @@ class SliderPanel : FrameLayout {
          * This is so we can get the height of the view and
          * ignore the system navigation that would be included if we
          * retrieved this value from the DisplayMetrics
-         */post { screenHeight = height }
+         */
+        post { screenHeight = height }
     }
 
     private fun lock() {

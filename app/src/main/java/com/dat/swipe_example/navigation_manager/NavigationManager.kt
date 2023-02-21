@@ -16,7 +16,6 @@ class NavigationManager() :
     protected lateinit var mActivity: Activity
     protected lateinit var mFragmentManager: FragmentManager
     private var mContentId: Int? = null
-    private var lastFm = ""
     var navigateAble = true
     val handlerNavigate = Handler(Looper.getMainLooper())
 

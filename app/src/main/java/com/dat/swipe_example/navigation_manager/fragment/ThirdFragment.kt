@@ -32,7 +32,7 @@ class ThirdFragment : BaseFragment<FragmentThirdBinding>(FragmentThirdBinding::i
             .edgeSize(0.5f)
             .edge(false)
             .endScrimThreshHold(0.7f)
-            .position(com.dat.swipe_back.fragment.model.SliderPosition.TOP)
+            .position(com.dat.swipe_back.fragment.model.SliderPosition.FREE)
             .scrimStartAlpha(1f)
             .build()
     }

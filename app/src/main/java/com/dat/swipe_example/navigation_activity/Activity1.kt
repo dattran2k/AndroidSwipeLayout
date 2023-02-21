@@ -1,4 +1,4 @@
-package com.dat.swipe_example.activity_navigation
+package com.dat.swipe_example.navigation_activity
 
 import android.os.Bundle
 import android.util.Log
@@ -68,10 +68,15 @@ class Activity1 : AppCompatActivity() {
                 if (viewAtPosition == null || layoutManager
                         .isViewPartiallyVisible(viewAtPosition, false, true)
                 ) {
-                    binding.recyclerView.post(Runnable { layoutManager.scrollToPosition(currentPosition) })
+                    binding.recyclerView.post { layoutManager.scrollToPosition(currentPosition) }
                 }
             }
         })
+    }
+
+    override fun onResume() {
+        super.onResume()
+        scrollToPosition()
     }
     override fun onPause() {
         super.onPause()

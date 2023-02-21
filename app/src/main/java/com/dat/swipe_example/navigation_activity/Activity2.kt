@@ -1,4 +1,4 @@
-package com.dat.swipe_example.activity_navigation
+package com.dat.swipe_example.navigation_activity
 
 import android.os.Bundle
 import android.util.Log
@@ -13,9 +13,8 @@ import androidx.viewpager.widget.ViewPager.SimpleOnPageChangeListener
 import com.dat.swipe_back.fragment.model.SliderConfig
 import com.dat.swipe_back.fragment.model.SliderListener
 import com.dat.swipe_back.fragment.model.SliderPosition
-import com.dat.swipe_back.fragment.slider.SliderPanel
 import com.dat.swipe_example.R
-import com.dat.swipe_example.activity_navigation.Activity1.Companion.currentPosition
+import com.dat.swipe_example.navigation_activity.Activity1.Companion.currentPosition
 import com.dat.swipe_example.databinding.Activity2Binding
 
 class Activity2 : AppCompatActivity(), SliderListener {
@@ -84,7 +83,7 @@ class Activity2 : AppCompatActivity(), SliderListener {
             .endScrimThreshHold(0.7f)
             .quickDismiss(true,100)
             .scrimColor(ContextCompat.getColor(this, R.color.black))
-            .scrimStartAlpha(0.9f)
+            .scrimStartAlpha(1f)
             .build()
     }
 

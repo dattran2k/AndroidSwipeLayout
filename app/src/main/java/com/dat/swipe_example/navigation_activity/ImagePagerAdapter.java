@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dat.swipe_example.activity_navigation;
+package com.dat.swipe_example.navigation_activity;
 
 
 

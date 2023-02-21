@@ -17,20 +17,23 @@
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.SwipeableFragmen.NoActionBar">
-
-        </activity>
-        <activity
-            android:name=".activity_navigation.Activity1"
-            android:exported="true"
-            android:label="@string/app_name"
-            android:theme="@style/Theme.SwipeableFragmen.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-            android:name=".activity_navigation.Activity2"
+            android:name=".navigation_activity.Activity1"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.SwipeableFragmen.NoActionBar">
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
+        </activity>
+        <activity
+            android:name=".navigation_activity.Activity2"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.AppCompat.Translucent">
